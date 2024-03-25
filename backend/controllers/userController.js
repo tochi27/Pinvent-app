@@ -4,6 +4,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const Token = require("../models/tokenModel");
 const crypto = require("crypto");
+const sendEmail = require('../utils/sendEmail')
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "1d" });
@@ -261,9 +262,18 @@ const forgotPassword = asyncHandler(async (req, res) => {
     <a href=${resetUrl} clicktracking=off>${resetUrl}</a>
     <p>Regards...</p>
     <p>Pinvent team</p>
-  `
+  `;
+  const subject = "Password Reset Request"
+  const send_to = user.email
+  const sent_from = process.env.EMAIL_USER
 
-  res.send("Forgot password");
+  try {
+    await sendEmail(subject, message, send_to, sent_from)
+    res.status(200).json({success: true, message: "Reset email sent"})
+  } catch (error) {
+    res.status(500)
+    throw new Error("Email not sent. Please try again");
+  }
 });
 
 module.exports = {
